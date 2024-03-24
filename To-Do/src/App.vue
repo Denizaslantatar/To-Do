@@ -1,85 +1,116 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { ref, onMounted, computed, watch } from 'vue'
+
+const todos = ref([])
+const name = ref('')
+
+const input_content = ref('')
+const input_category = ref(null)
+
+const todos_asc = computed(() => todos.value.sort((a,b) =>{
+	return a.createdAt - b.createdAt
+}))
+
+watch(name, (newVal) => {
+	localStorage.setItem('name', newVal)
+})
+
+watch(todos, (newVal) => {
+	localStorage.setItem('todos', JSON.stringify(newVal))
+}, {
+	deep: true
+})
+
+const addTodo = () => {
+	if (input_content.value.trim() === '' || input_category.value === null) {
+		return
+	}
+
+	todos.value.push({
+		content: input_content.value,
+		category: input_category.value,
+		done: false,
+		editable: false,
+		createdAt: new Date().getTime()
+	})
+}
+
+const removeTodo = (todo) => {
+	todos.value = todos.value.filter((t) => t !== todo)
+}
+
+onMounted(() => {
+	name.value = localStorage.getItem('name') || ''
+	todos.value = JSON.parse(localStorage.getItem('todos')) || []
+})
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+	<main class="app">
+		
+		<section class="greeting">
+			<h2 class="title">
+				Hi there, <input type="text" id="name" placeholder="Name here" v-model="name">
+			</h2>
+		</section>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+		<section class="create-todo">
+			<form id="new-todo-form" @submit.prevent="addTodo">
+				<h4>What's on your todo list?</h4>
+				<input 
+					type="text" 
+					name="content" 
+					id="content" 
+					placeholder="e.g. make a video"
+					v-model="input_content" />
+				
+				<h4>Pick a category</h4>
+				<div class="options">
+					<label>
+						<input 
+							type="radio" 
+							name="category" 
+							id="category1" 
+							value="business"
+							v-model="input_category" />
+						<span class="bubble business"></span>
+						<div>Business</div>
+					</label>
+					<label>
+						<input 
+							type="radio" 
+							name="category" 
+							id="category2" 
+							value="personal"
+							v-model="input_category" />
+						<span class="bubble personal"></span>
+						<div>Personal</div>
+					</label>
+				</div>
+				<input type="submit" value="Add todo" />
+			</form>
+		</section>
 
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+		<section class="todo-list">
+			<h4 >TODO LIST</h4>
+			<div class="list" id="todo-list">
+				<div v-for="todo in todos_asc" :class="`todo-item ${todo.done && 'done'}`">
+					<label>
+						<input type="checkbox" v-model="todo.done" />
+						<span :class="`bubble ${
+							todo.category == 'business' 
+								? 'business' 
+								: 'personal'
+						}`"></span>
+					</label>
+					<div class="todo-content">
+						<input type="text" v-model="todo.content" />
+					</div>
+					<div class="actions">
+						<button class="delete" @click="removeTodo(todo)">Delete</button>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
 </template>
-
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
-
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
-</style>
