@@ -1,5 +1,5 @@
 
-# To-Do-App
+# To Do Web App
 
 This template should help get you started developing with Vue 3 in Vite.
 It was developed for saving and using data in local storage.
